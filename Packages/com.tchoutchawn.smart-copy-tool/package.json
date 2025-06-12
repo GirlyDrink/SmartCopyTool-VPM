@@ -1,0 +1,16 @@
+{
+  "name": "com.tchoutchawn.smart-copy-tool",
+  "displayName": "Smart Copy Tool",
+  "version": "0.0.1",
+  "description": "Describe this Package",
+  "unity": "2022.3",
+  "dependencies": {},
+  "gitDependencies": {},
+  "vpmDependencies": {},
+  "author": {
+    "name": "tchoutchawn"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {},
+  "localPath": "F:\\Unity\\Tools\\SmartCopyTool-VPM\\Packages\\com.tchoutchawn.smart-copy-tool"
+}
