@@ -9,6 +9,18 @@ public class SmartCopyTool : EditorWindow
     private string sourceFolderPath = "";
     private string destinationFolderName = "";
     private DefaultAsset sourceFolder;
+    private Vector2 scrollPosition;
+    private List<ReferenceChange> referenceChanges = new List<ReferenceChange>();
+    private bool showPreview = false;
+
+    private class ReferenceChange
+    {
+        public string AssetPath { get; set; }
+        public string PropertyName { get; set; }
+        public string OldReferencePath { get; set; }
+        public string NewReferencePath { get; set; }
+        public bool IsValid { get; set; }
+    }
 
     [MenuItem("Tools/Smart Copy Tool")]
     public static void ShowWindow()
@@ -37,13 +49,148 @@ public class SmartCopyTool : EditorWindow
         // Destination folder name input
         destinationFolderName = EditorGUILayout.TextField("New Folder Name", destinationFolderName);
 
-        // Copy button
+        // Preview button
         EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(sourceFolderPath) || string.IsNullOrEmpty(destinationFolderName));
-        if (GUILayout.Button("Smart Copy"))
+        if (GUILayout.Button("Preview Changes"))
         {
-            PerformSmartCopy();
+            showPreview = true;
+            referenceChanges.Clear();
+            CollectReferenceChanges();
         }
         EditorGUI.EndDisabledGroup();
+
+        // Display preview
+        if (showPreview && referenceChanges.Count > 0)
+        {
+            GUILayout.Label("Preview of Reference Changes:", EditorStyles.boldLabel);
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
+            foreach (var change in referenceChanges)
+            {
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Label($"Asset: {change.AssetPath}", GUILayout.Width(300));
+                GUILayout.Label($"Property: {change.PropertyName}", GUILayout.Width(150));
+                GUILayout.Label($"Old: {change.OldReferencePath}", GUILayout.Width(300));
+                GUILayout.Label($"New: {change.NewReferencePath}", change.IsValid ? EditorStyles.label : EditorStyles.boldLabel);
+                if (!change.IsValid)
+                {
+                    EditorGUILayout.LabelField("(Missing)", EditorStyles.boldLabel);
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            EditorGUILayout.EndScrollView();
+
+            // Confirm and Cancel buttons
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Confirm and Copy"))
+            {
+                PerformSmartCopy();
+                showPreview = false;
+                referenceChanges.Clear();
+            }
+            if (GUILayout.Button("Cancel"))
+            {
+                showPreview = false;
+                referenceChanges.Clear();
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        else if (showPreview)
+        {
+            GUILayout.Label("No reference changes found.", EditorStyles.helpBox);
+            if (GUILayout.Button("Cancel"))
+            {
+                showPreview = false;
+                referenceChanges.Clear();
+            }
+        }
+    }
+
+    private void CollectReferenceChanges()
+    {
+        if (!AssetDatabase.IsValidFolder(sourceFolderPath))
+        {
+            Debug.LogError("Selected source is not a valid folder.");
+            showPreview = false;
+            return;
+        }
+
+        string sourceFolderName = Path.GetFileName(sourceFolderPath);
+        string parentFolder = Path.GetDirectoryName(sourceFolderPath);
+        string destinationFolderPath = Path.Combine(parentFolder, destinationFolderName);
+
+        // Get all assets in the source folder
+        string[] assetGuids = AssetDatabase.FindAssets("", new[] { sourceFolderPath });
+
+        foreach (string guid in assetGuids)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            Object asset = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
+            if (asset == null) continue;
+
+            if (asset is GameObject go)
+            {
+                CollectGameObjectReferenceChanges(go, sourceFolderPath, destinationFolderPath);
+            }
+            else
+            {
+                CollectSerializedObjectReferenceChanges(asset, sourceFolderPath, destinationFolderPath);
+            }
+        }
+    }
+
+    private void CollectGameObjectReferenceChanges(GameObject go, string sourceFolderPath, string destinationFolderPath)
+    {
+        // Process the GameObject itself
+        SerializedObject serializedObject = new SerializedObject(go);
+        CollectSerializedPropertyChanges(serializedObject, sourceFolderPath, destinationFolderPath);
+
+        // Process all components
+        Component[] components = go.GetComponents<Component>();
+        foreach (Component component in components)
+        {
+            if (component == null) continue;
+            SerializedObject serializedComponent = new SerializedObject(component);
+            CollectSerializedPropertyChanges(serializedComponent, sourceFolderPath, destinationFolderPath);
+        }
+
+        // Recursively process all children
+        foreach (Transform child in go.transform)
+        {
+            CollectGameObjectReferenceChanges(child.gameObject, sourceFolderPath, destinationFolderPath);
+        }
+    }
+
+    private void CollectSerializedObjectReferenceChanges(Object asset, string sourceFolderPath, string destinationFolderPath)
+    {
+        SerializedObject serializedObject = new SerializedObject(asset);
+        CollectSerializedPropertyChanges(serializedObject, sourceFolderPath, destinationFolderPath);
+    }
+
+    private void CollectSerializedPropertyChanges(SerializedObject serializedObject, string sourceFolderPath, string destinationFolderPath)
+    {
+        SerializedProperty properties = serializedObject.GetIterator();
+        while (properties.NextVisible(true))
+        {
+            if (properties.propertyType == SerializedPropertyType.ObjectReference && properties.objectReferenceValue != null)
+            {
+                string referencedAssetPath = AssetDatabase.GetAssetPath(properties.objectReferenceValue);
+                if (!string.IsNullOrEmpty(referencedAssetPath) && referencedAssetPath.StartsWith(sourceFolderPath))
+                {
+                    string relativePath = referencedAssetPath.Substring(sourceFolderPath.Length + 1);
+                    string newAssetPath = Path.Combine(destinationFolderPath, relativePath);
+                    bool isValid = File.Exists(Path.Combine(Application.dataPath, newAssetPath.Substring(7))); // Remove "Assets/" prefix
+
+                    referenceChanges.Add(new ReferenceChange
+                    {
+                        AssetPath = AssetDatabase.GetAssetPath(serializedObject.targetObject),
+                        PropertyName = properties.propertyPath,
+                        OldReferencePath = referencedAssetPath,
+                        NewReferencePath = newAssetPath,
+                        IsValid = isValid
+                    });
+                }
+            }
+        }
     }
 
     private void PerformSmartCopy()
@@ -98,7 +245,6 @@ public class SmartCopyTool : EditorWindow
             // Handle GameObjects (prefabs) and their hierarchies
             if (asset is GameObject go)
             {
-                // Process the GameObject and all its children
                 modified |= UpdateGameObjectReferences(go, sourceFolderPath, destinationFolderPath);
             }
             // Handle other assets (materials, animations, etc.)

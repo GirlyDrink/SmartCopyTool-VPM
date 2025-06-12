@@ -1,16 +1,21 @@
 {
   "name": "com.tchoutchawn.smart-copy-tool",
   "displayName": "Smart Copy Tool",
-  "version": "0.0.1",
-  "description": "Describe this Package",
+  "version": "1.0.0",
   "unity": "2022.3",
-  "dependencies": {},
-  "gitDependencies": {},
-  "vpmDependencies": {},
+  "description": "A Unity Editor tool for VRChat creators to copy folders and automatically update all asset references (e.g., textures, meshes, animations, prefabs) in components, including VRCFury components. Includes a preview feature to review reference changes before copying.",
   "author": {
-    "name": "tchoutchawn"
+    "name": "tchoutchawn",
+    "url": "https://github.com/tchoutchawn"
   },
-  "legacyFolders": {},
-  "legacyFiles": {},
-  "localPath": "F:\\Unity\\Tools\\SmartCopyTool-VPM\\Packages\\com.tchoutchawn.smart-copy-tool"
+  "license": "MIT",
+  "keywords": [
+    "vrchat",
+    "vpm",
+    "editor",
+    "tool",
+    "avatar"
+  ],
+  "dependencies": {},
+  "vpmDependencies": {}
 }
