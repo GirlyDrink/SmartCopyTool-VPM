@@ -64,17 +64,25 @@ public class SmartCopyTool : EditorWindow
         {
             GUILayout.Label("Preview of Reference Changes:", EditorStyles.boldLabel);
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
+
+            // Table header
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            GUILayout.Label("Asset", EditorStyles.boldLabel, GUILayout.Width(250));
+            GUILayout.Label("Property", EditorStyles.boldLabel, GUILayout.Width(150));
+            GUILayout.Label("Old Reference", EditorStyles.boldLabel, GUILayout.Width(250));
+            GUILayout.Label("New Reference", EditorStyles.boldLabel, GUILayout.Width(250));
+            GUILayout.Label("Status", EditorStyles.boldLabel, GUILayout.Width(100));
+            EditorGUILayout.EndHorizontal();
+
+            // Table rows
             foreach (var change in referenceChanges)
             {
                 EditorGUILayout.BeginHorizontal();
-                GUILayout.Label($"Asset: {change.AssetPath}", GUILayout.Width(300));
-                GUILayout.Label($"Property: {change.PropertyName}", GUILayout.Width(150));
-                GUILayout.Label($"Old: {change.OldReferencePath}", GUILayout.Width(300));
-                GUILayout.Label($"New: {change.NewReferencePath}", change.IsValid ? EditorStyles.label : EditorStyles.boldLabel);
-                if (!change.IsValid)
-                {
-                    EditorGUILayout.LabelField("(Missing)", EditorStyles.boldLabel);
-                }
+                GUILayout.Label(change.AssetPath, GUILayout.Width(250));
+                GUILayout.Label(change.PropertyName, GUILayout.Width(150));
+                GUILayout.Label(change.OldReferencePath, GUILayout.Width(250));
+                GUILayout.Label(change.NewReferencePath, change.IsValid ? EditorStyles.label : EditorStyles.boldLabel, GUILayout.Width(250));
+                GUILayout.Label(change.IsValid ? "Valid" : "Missing", change.IsValid ? EditorStyles.label : EditorStyles.boldLabel, GUILayout.Width(100));
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndScrollView();

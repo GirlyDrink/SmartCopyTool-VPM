@@ -1,9 +1,9 @@
 {
   "name": "com.girlydrink.smart-copy-tool",
   "displayName": "Smart Copy Tool",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "2022.3",
-  "description": "A Unity Editor tool for VRChat creators to copy folders and automatically update all asset references (e.g., textures, meshes, animations, prefabs) in components, including VRCFury components. Includes a preview feature to review reference changes before copying.",
+  "description": "A Unity Editor tool for VRChat creators to copy folders and automatically update all asset references (e.g., textures, meshes, animations, prefabs) in components, including VRCFury components. Includes a preview feature with a table view to review reference changes before copying.",
   "author": {
     "name": "GirlyDrink",
     "url": "https://github.com/GirlyDrink"
