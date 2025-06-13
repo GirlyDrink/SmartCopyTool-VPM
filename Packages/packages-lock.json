@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "com.tchoutchawn.smart-copy-tool": {
-      "version": "file:com.tchoutchawn.smart-copy-tool",
+    "com.girlydrink.smart-copy-tool": {
+      "version": "file:com.girlydrink.smart-copy-tool",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}

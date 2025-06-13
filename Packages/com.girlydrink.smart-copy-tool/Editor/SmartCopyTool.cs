@@ -12,6 +12,10 @@ public class SmartCopyTool : EditorWindow
     private Vector2 scrollPosition;
     private List<ReferenceChange> referenceChanges = new List<ReferenceChange>();
     private bool showPreview = false;
+    private float[] columnWidths = { 200f, 120f, 200f, 200f, 80f }; // Initial widths
+    private int maxPreviewRows = 100; // Default row limit
+    private int displayedRows = 100; // Current displayed rows
+    private Dictionary<string, GUIContent> contentCache = new Dictionary<string, GUIContent>(); // Cache for GUIContent
 
     private class ReferenceChange
     {
@@ -55,6 +59,8 @@ public class SmartCopyTool : EditorWindow
         {
             showPreview = true;
             referenceChanges.Clear();
+            contentCache.Clear();
+            displayedRows = maxPreviewRows;
             CollectReferenceChanges();
         }
         EditorGUI.EndDisabledGroup();
@@ -63,29 +69,59 @@ public class SmartCopyTool : EditorWindow
         if (showPreview && referenceChanges.Count > 0)
         {
             GUILayout.Label("Preview of Reference Changes:", EditorStyles.boldLabel);
+
+            // Row limit input
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Max Rows:", GUILayout.Width(80));
+            maxPreviewRows = EditorGUILayout.IntField(maxPreviewRows, GUILayout.Width(60));
+            maxPreviewRows = Mathf.Max(1, maxPreviewRows); // Minimum 1 row
+            EditorGUILayout.EndHorizontal();
+
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
 
-            // Table header
+            // Table header with resizable columns
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            GUILayout.Label("Asset", EditorStyles.boldLabel, GUILayout.Width(250));
-            GUILayout.Label("Property", EditorStyles.boldLabel, GUILayout.Width(150));
-            GUILayout.Label("Old Reference", EditorStyles.boldLabel, GUILayout.Width(250));
-            GUILayout.Label("New Reference", EditorStyles.boldLabel, GUILayout.Width(250));
-            GUILayout.Label("Status", EditorStyles.boldLabel, GUILayout.Width(100));
+            string[] headers = { "Asset", "Property", "Old Reference", "New Reference", "Status" };
+            for (int i = 0; i < columnWidths.Length; i++)
+            {
+                Rect headerRect = GUILayoutUtility.GetRect(columnWidths[i], 20, GUILayout.Width(columnWidths[i]));
+                GUI.Label(headerRect, headers[i], EditorStyles.boldLabel);
+
+                // Resize handle
+                Rect resizeRect = new Rect(headerRect.xMax - 2, headerRect.y, 4, headerRect.height);
+                EditorGUIUtility.AddCursorRect(resizeRect, MouseCursor.ResizeHorizontal);
+                if (Event.current.type == EventType.MouseDrag && resizeRect.Contains(Event.current.mousePosition))
+                {
+                    columnWidths[i] += Event.current.delta.x;
+                    columnWidths[i] = Mathf.Max(50f, columnWidths[i]);
+                    Repaint();
+                }
+            }
             EditorGUILayout.EndHorizontal();
 
             // Table rows
-            foreach (var change in referenceChanges)
+            int rowCount = Mathf.Min(referenceChanges.Count, displayedRows);
+            for (int i = 0; i < rowCount; i++)
             {
+                var change = referenceChanges[i];
                 EditorGUILayout.BeginHorizontal();
-                GUILayout.Label(change.AssetPath, GUILayout.Width(250));
-                GUILayout.Label(change.PropertyName, GUILayout.Width(150));
-                GUILayout.Label(change.OldReferencePath, GUILayout.Width(250));
-                GUILayout.Label(change.NewReferencePath, change.IsValid ? EditorStyles.label : EditorStyles.boldLabel, GUILayout.Width(250));
-                GUILayout.Label(change.IsValid ? "Valid" : "Missing", change.IsValid ? EditorStyles.label : EditorStyles.boldLabel, GUILayout.Width(100));
+                DrawTableCell(change.AssetPath, columnWidths[0]);
+                DrawTableCell(change.PropertyName, columnWidths[1]);
+                DrawTableCell(change.OldReferencePath, columnWidths[2]);
+                DrawTableCell(change.NewReferencePath, columnWidths[3], !change.IsValid);
+                DrawTableCell(change.IsValid ? "Valid" : "Missing", columnWidths[4], !change.IsValid);
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndScrollView();
+
+            // Show More button
+            if (rowCount < referenceChanges.Count)
+            {
+                if (GUILayout.Button($"Show More ({referenceChanges.Count - rowCount} remaining)"))
+                {
+                    displayedRows = Mathf.Min(displayedRows + maxPreviewRows, referenceChanges.Count);
+                }
+            }
 
             // Confirm and Cancel buttons
             EditorGUILayout.BeginHorizontal();
@@ -94,11 +130,13 @@ public class SmartCopyTool : EditorWindow
                 PerformSmartCopy();
                 showPreview = false;
                 referenceChanges.Clear();
+                contentCache.Clear();
             }
             if (GUILayout.Button("Cancel"))
             {
                 showPreview = false;
                 referenceChanges.Clear();
+                contentCache.Clear();
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -109,8 +147,33 @@ public class SmartCopyTool : EditorWindow
             {
                 showPreview = false;
                 referenceChanges.Clear();
+                contentCache.Clear();
             }
         }
+    }
+
+    private void DrawTableCell(string text, float width, bool isError = false)
+    {
+        if (!contentCache.TryGetValue(text, out GUIContent content))
+        {
+            content = new GUIContent(TruncateText(text, width), text);
+            contentCache[text] = content;
+        }
+        Rect cellRect = GUILayoutUtility.GetRect(width, 20, GUILayout.Width(width));
+        GUI.Label(cellRect, content, isError ? EditorStyles.boldLabel : EditorStyles.label);
+    }
+
+    private string TruncateText(string text, float width)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        GUIStyle style = EditorStyles.label;
+        float textWidth = style.CalcSize(new GUIContent(text)).x;
+        if (textWidth <= width - 10) return text;
+
+        int len = text.Length;
+        while (len > 0 && style.CalcSize(new GUIContent(text.Substring(0, len) + "...")).x > width - 10)
+            len--;
+        return len > 0 ? text.Substring(0, len) + "..." : "...";
     }
 
     private void CollectReferenceChanges()
