@@ -1,21 +1,23 @@
 name: Invoke VCC Listing Repo Update
-  
-on: 
+
+on:
   workflow_dispatch:
   workflow_run:
     workflows: [Build Release]
     types:
       - completed
   release:
-     types: [published, created, edited, unpublished, deleted, released]
+    types: [published, created, edited, unpublished, deleted, released]
+
 jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Listing Workflow
+        if: success()
         run: |
           curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${{ secrets.VCC_LISTING_PAT }}" \
-          https://api.github.com/repos/girlydrink/Tools_Listing_VCC/dispatches \
-          -d '{"event_type":"tool_release_created"}'
+          https://api.github.com/repos/girlydrink/Tools_Listing_VCC/actions/workflows/build-listing.yml/dispatches \
+          -d '{"ref":"main"}'
