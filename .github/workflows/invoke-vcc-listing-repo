@@ -1,0 +1,21 @@
+name: Build Repo Listing
+  
+on: 
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Build Release]
+    types:
+      - completed
+  release:
+     types: [published, created, edited, unpublished, deleted, released]
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Listing Workflow
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.LISTING_REPO_PAT }}" \
+          https://api.github.com/repos/girlydrink/Tools_Listing_VCC/dispatches \
+          -d '{"event_type":"tool_release_created"}'
