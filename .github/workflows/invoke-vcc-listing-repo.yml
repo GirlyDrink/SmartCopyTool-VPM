@@ -1,4 +1,4 @@
-name: Build Repo Listing
+name: Invoke VCC Listing Repo Update
   
 on: 
   workflow_dispatch:
