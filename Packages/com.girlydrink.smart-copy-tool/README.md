@@ -4,13 +4,13 @@ A Unity Editor tool for VRChat creators to copy folders and automatically update
 
 ## Installation
 1. Add this package to your VRChat project via the VRChat Creator Companion (VCC):
-   - Visit [https://tchoutchawn.github.io/SmartCopyTool-VPM](https://tchoutchawn.github.io/SmartCopyTool-VPM) to easily copy the repository URL.
-   - In VCC, go to **Settings > Repos** and add the repository URL: `https://tchoutchawn.github.io/SmartCopyTool-VPM/index.json`.
-   - In your project, add the **Smart Copy Tool** package (version 1.0.0) from the repository.
-2. The tool will appear in the Unity Editor under **Tools > Smart Copy Tool**.
+   - Visit [https://GirlyDrink.github.io/SmartCopyTool-VPM](https://GirlyDrink.github.io/SmartCopyTool-VPM) to easily copy the repository URL.
+   - In VCC, go to **Settings > Repos** and add the repository URL: `https://GirlyDrink.github.io/SmartCopyTool-VPM/index.json`.
+   - In your project, add the **Smart Copy Tool** package (version 1.0.2) from the repository.
+2. The tool will appear in the Unity Editor under **Tools > GirlyDrink's Tools > Smart Copy Tool**.
 
 ## Usage
-1. Open the tool via **Tools > Smart Copy Tool**.
+1. Open the tool via **Tools > GirlyDrink's Tools > Smart Copy Tool**.
 2. Drag a source folder (e.g., `Assets/_Canis/Avatar/Yeen`) into the **Source Folder** field.
 3. Enter a new folder name (e.g., `New_Yeen`) in the **New Folder Name** field.
 4. Click **Preview Changes** to see a list of all reference updates:
@@ -38,4 +38,4 @@ A Unity Editor tool for VRChat creators to copy folders and automatically update
 MIT License
 
 ## Support
-For issues or feature requests, create an issue on the [GitHub repository](https://github.com/tchoutchawn/SmartCopyTool-VPM).
+For issues or feature requests, create an issue on the [GitHub repository](https://github.com/GirlyDrink/SmartCopyTool-VPM).

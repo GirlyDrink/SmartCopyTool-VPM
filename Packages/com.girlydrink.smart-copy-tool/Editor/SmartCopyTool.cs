@@ -22,7 +22,7 @@ public class SmartCopyTool : EditorWindow
         public bool IsValid { get; set; }
     }
 
-    [MenuItem("Tools/Smart Copy Tool")]
+    [MenuItem("Tools/GirlyDrink's Tools/Smart Copy Tool")]
     public static void ShowWindow()
     {
         GetWindow<SmartCopyTool>("Smart Copy Tool");
